@@ -1,3 +1,4 @@
+using api.infrastructure.irc;
 using api.infrastructure.repositories.twitch;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<TwitchRepository>();
+
+builder.Services.AddHostedService<TwitchChat>();
 
 var app = builder.Build();
 

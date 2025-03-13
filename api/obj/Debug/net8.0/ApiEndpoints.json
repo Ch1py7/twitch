@@ -17,12 +17,34 @@
   },
   {
     "ContainingType": "api.Controllers.TwitchController",
+    "Method": "RefreshToken",
+    "RelativePath": "Twitch/refresh",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "refreshToken",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "api.Controllers.TwitchController",
     "Method": "GetToken",
     "RelativePath": "Twitch/token",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "code",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   }
 ]

@@ -14,11 +14,11 @@ namespace api.Controllers
         }
 
         [HttpGet("token")]
-        public async Task<IActionResult> GetToken()
+        public async Task<IActionResult> GetToken(string code)
         {
             try
             {
-                string tokenResponse = await _twitchRepository.GetToken();
+                string tokenResponse = await _twitchRepository.GetToken(code);
                 return Ok(tokenResponse);
             }
             catch (Exception ex)
@@ -26,7 +26,19 @@ namespace api.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
-
+        [HttpGet("refresh")]
+        public async Task<IActionResult> RefreshToken(string refreshToken)
+        {
+            try
+            {
+                string tokenResponse = await _twitchRepository.RefreshToken(refreshToken);
+                return Ok(tokenResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
         [HttpGet("auth")]
         public async Task<IActionResult> GetInformation(string accessToken)
         {
