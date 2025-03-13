@@ -1,0 +1,28 @@
+[
+  {
+    "ContainingType": "api.Controllers.TwitchController",
+    "Method": "GetInformation",
+    "RelativePath": "Twitch/auth",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accessToken",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "api.Controllers.TwitchController",
+    "Method": "GetToken",
+    "RelativePath": "Twitch/token",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]
