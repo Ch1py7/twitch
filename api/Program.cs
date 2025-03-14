@@ -1,3 +1,4 @@
+using api.infrastructure.config;
 using api.infrastructure.irc;
 using api.infrastructure.repositories.twitch;
 
@@ -10,6 +11,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<TwitchRepository>();
+
+builder.Services.Configure<Config>(options =>
+{
+    options.ClientId = Environment.GetEnvironmentVariable("ClientId", EnvironmentVariableTarget.Machine) ?? "";
+    options.Secret = Environment.GetEnvironmentVariable("Secret", EnvironmentVariableTarget.Machine) ?? "";
+    options.GrantType = "client_credentials";
+    options.RedirectUri = "http://localhost:3000";
+    options.Scope = "chat:read";
+    options.TokenType = "bearer";
+    options.AccessToken = "";
+    options.RefreshToken = "";
+});
 
 builder.Services.AddHostedService<TwitchChat>();
 

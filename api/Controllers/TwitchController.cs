@@ -1,4 +1,5 @@
 using api.infrastructure.repositories.twitch;
+using api.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
@@ -18,7 +19,7 @@ namespace api.Controllers
         {
             try
             {
-                string tokenResponse = await _twitchRepository.GetToken(code);
+                TwitchToken tokenResponse = await _twitchRepository.GetToken(code);
                 return Ok(tokenResponse);
             }
             catch (Exception ex)
@@ -31,7 +32,7 @@ namespace api.Controllers
         {
             try
             {
-                string tokenResponse = await _twitchRepository.RefreshToken(refreshToken);
+                TwitchToken tokenResponse = await _twitchRepository.RefreshToken(refreshToken);
                 return Ok(tokenResponse);
             }
             catch (Exception ex)
@@ -44,7 +45,7 @@ namespace api.Controllers
         {
             try
             {
-                string response = await _twitchRepository.GetAuth(accessToken);
+                TwitchToken response = await _twitchRepository.GetAuth(accessToken);
                 return Ok(response);
             }
             catch (Exception ex)

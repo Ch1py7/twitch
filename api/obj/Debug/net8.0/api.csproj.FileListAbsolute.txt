@@ -34,3 +34,4 @@ D:\projects\twitch\api\obj\Debug\net8.0\api.pdb
 D:\projects\twitch\api\obj\Debug\net8.0\api.genruntimeconfig.cache
 D:\projects\twitch\api\obj\Debug\net8.0\ref\api.dll
 D:\projects\twitch\api\obj\Debug\net8.0\api.sourcelink.json
+D:\projects\twitch\api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
