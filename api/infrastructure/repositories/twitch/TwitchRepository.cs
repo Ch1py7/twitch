@@ -1,20 +1,23 @@
-﻿using System.Web;
+﻿using System.Text.Json;
 using api.infrastructure.config;
+using api.Models;
+using Microsoft.Extensions.Options;
 
 namespace api.infrastructure.repositories.twitch
 {
     public class TwitchRepository
     {
-        private string twitch_url = "https://id.twitch.tv/oauth2";
-        public readonly Config config = new();
+        private readonly string twitch_url = "https://id.twitch.tv/oauth2";
+        public readonly Config config;
         private readonly HttpClient client;
 
-        public TwitchRepository(HttpClient httpClient)
+        public TwitchRepository(HttpClient httpClient, IOptions<Config> config)
         {
             client = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            this.config = config.Value;
         }
 
-        public async Task<string> GetToken(string code)
+        public async Task<TwitchToken> GetToken(string code)
         {
             this.config.GrantType = "authorization_code";
 
@@ -35,9 +38,14 @@ namespace api.infrastructure.repositories.twitch
                 throw new Exception($"Error fetching token: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
             }
 
-            return responseString;
+            var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
+
+            this.config.AccessToken = tokenData.Access_Token;
+            this.config.RefreshToken = tokenData.Refresh_Token;
+
+            return tokenData;
         }
-        public async Task<string> RefreshToken(string refreshToken)
+        public async Task<TwitchToken> RefreshToken(string? refreshToken)
         {
             this.config.GrantType = "refresh_token";
 
@@ -46,7 +54,7 @@ namespace api.infrastructure.repositories.twitch
                 { "client_id", this.config.ClientId },
                 { "client_secret", this.config.Secret },
                 { "grant_type", this.config.GrantType },
-                { "refresh_token", refreshToken }
+                { "refresh_token", !String.IsNullOrEmpty(refreshToken) ? refreshToken : this.config.RefreshToken }
             };
             var content = new FormUrlEncodedContent(body);
             var response = await this.client.PostAsync($"{this.twitch_url}/token", content);
@@ -57,9 +65,14 @@ namespace api.infrastructure.repositories.twitch
                 throw new Exception($"Error fetching token: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
             }
 
-            return responseString;
+            var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
+
+            this.config.AccessToken = tokenData.Access_Token;
+            this.config.RefreshToken = tokenData.Refresh_Token;
+
+            return tokenData;
         }
-        public async Task<string> GetAuth(string accessToken)
+        public async Task<TwitchToken> GetAuth(string accessToken)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{this.twitch_url}/validate");
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("OAuth", accessToken);
@@ -72,7 +85,12 @@ namespace api.infrastructure.repositories.twitch
                 throw new Exception($"Error fetching information: {response.StatusCode} - {responseString}");
             }
 
-            return responseString;
+            var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
+
+            this.config.AccessToken = tokenData.Access_Token;
+            this.config.RefreshToken = tokenData.Refresh_Token;
+
+            return tokenData;
         }
     }
 }
