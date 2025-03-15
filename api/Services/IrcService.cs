@@ -1,21 +1,23 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
+using api.infrastructure.irc;
+using api.infrastructure.parser;
 using api.infrastructure.repositories.twitch;
 using api.Models;
-using api.infrastructure.parser;
 
 namespace api.Services
 {
     public class IrcService
     {
-        private byte[] buffer = new byte[4096];
         private readonly ClientWebSocket ws;
         private TwitchRepository twitchRepository;
+        private readonly ILogger<TwitchChat> logger;
 
-        public IrcService(ClientWebSocket ws, TwitchRepository twitchRepository)
+        public IrcService(ClientWebSocket ws, TwitchRepository twitchRepository, ILogger<TwitchChat> logger)
         {
             this.ws = ws;
             this.twitchRepository = twitchRepository;
+            this.logger = logger;
         }
 
         public async Task SendMessage(string message)
@@ -32,30 +34,27 @@ namespace api.Services
             {
                 var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), stoppingToken);
                 string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                MessageParser parsedMessages = new MessageParser(message);
 
-                if (message.Contains(":tmi.twitch.tv NOTICE * :Login authentication failed"))
+                if (message == ":tmi.twitch.tv NOTICE * :Login authentication failed")
                 {
-                    await this.twitchRepository.RefreshToken("");
+                    await twitchRepository.RefreshToken("");
                 }
-                else
+                if (message == "PING :tmi.twitch.tv\r\n")
                 {
-                    if (message.Contains("PING :tmi.twitch.tv"))
-                    {
-                        Console.WriteLine("receiving ping, sending pong");
-                        await SendMessage("PONG :tmi.twitch.tv");
-                    }
-                    else
-                    {
-                        if (!message.Contains("Welcome") && !message.Contains("JOIN") && !message.Contains("CAP * ACK") && !message.Contains("NAMES"))
-                        {
-                            TwitchMessage parsedToTwitch = parsedMessages.ToTwitchMessage();
-                            Console.WriteLine(parsedToTwitch.Channel);
-                            Console.WriteLine(parsedToTwitch.UserInfo.UserName);
-                            Console.WriteLine(parsedToTwitch.UserInfo.Color);
-                        }
-                    }
+                    logger.LogInformation("receiving ping, sending pong");
+                    await SendMessage("PONG :tmi.twitch.tv");
+                }
+                if (message != ":tmi.twitch.tv 001 bulbsum :Welcome, GLHF!\r\n:tmi.twitch.tv 002 bulbsum :Your host is tmi.twitch.tv\r\n:tmi.twitch.tv 003 bulbsum :This server is rather new\r\n:tmi.twitch.tv 004 bulbsum :-\r\n:tmi.twitch.tv 375 bulbsum :-\r\n:tmi.twitch.tv 372 bulbsum :You are in a maze of twisty passages, all alike.\r\n:tmi.twitch.tv 376 bulbsum :>\r\n")
+                {
+                    MessageParser messageParser = new MessageParser(message);
 
+                    switch (messageParser.messageType)
+                    {
+                        case ("PRIVMSG"):
+                            TwitchMessage parsedMessage = messageParser.ParseTwitchMessage();
+                            logger.LogInformation($"{parsedMessage.UserInfo.Message}");
+                            break;
+                    }
                 }
             }
         }

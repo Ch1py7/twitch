@@ -1,6 +1,6 @@
-﻿namespace api.infrastructure.config
+﻿namespace api.Config
 {
-    public class Config
+    public class TwitchConfig
     {
         public string ClientId { get; set; } = "";
         public string Secret { get; set; } = "";

@@ -1,70 +1,65 @@
-﻿using System.Drawing;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using api.Models;
 
 namespace api.infrastructure.parser
 {
     public class MessageParser
     {
-        private readonly Dictionary<string, string> parsedMessage;
-        private string messageType { get; set; } = "";
+        public string messageType { get; set; } = "";
         private readonly string rawMessage;
 
         public MessageParser(string message)
         {
-            this.rawMessage = message;
-            this.parsedMessage = message.Split(';')
-                .Where(msg => msg.Contains("="))
-                .Select(msg => msg.Split('='))
-                .Where(args => args.Length == 2)
-                .ToDictionary(args => args[0], args => args[1]);
+            rawMessage = message;
+            var parsedMessage = ParseTwitchMessage();
 
-            this.messageType = this.DetectMessageType(message);
+            messageType = DetectMessageType(message);
         }
-        public TwitchMessage? ToTwitchMessage()
+        public TwitchMessage ParseTwitchMessage()
         {
-            if (this.messageType != "PRIVMSG") return null;
+            var parsedTags = new Dictionary<string, string>();
 
-            var (channel, messageContent) = ExtractChannelAndMessage();
+            int spaceIndex = rawMessage.IndexOf(' ');
+            string tagsPart = spaceIndex != -1 ? rawMessage.Substring(0, spaceIndex) : rawMessage;
+            string messagePart = spaceIndex != -1 ? rawMessage.Substring(spaceIndex + 1) : "";
 
-            return new TwitchMessage
+            foreach (var part in tagsPart.Split(';'))
             {
-                Date = parsedMessage.GetValueOrDefault("tmi-sent-ts", ""),
-                Channel = channel,
-                ChannelId = parsedMessage.GetValueOrDefault("room-id", ""),
-                FirstMsg = parsedMessage.GetValueOrDefault("first-msg", "0") == "1",
-                UserInfo = ExtractUserInfo(messageContent)
-            };
+                var keyValue = part.Split(new[] { '=' }, 2);
+                string key = keyValue[0];
+                string value = keyValue.Length > 1 ? keyValue[1] : "";
+
+                parsedTags[key] = value;
+            }
+
+            var (channel, messageContent) = ExtractChannelAndMessage(messagePart);
+
+            return new TwitchMessage(
+                Date: parsedTags.GetValueOrDefault("tmi-sent-ts", ""),
+                Channel: channel,
+                ChannelId: parsedTags.GetValueOrDefault("room-id", ""),
+                FirstMsg: parsedTags.TryGetValue("first-msg", out var firstMsg) && firstMsg == "1",
+                UserInfo: new UserInfo(
+                    UserName: parsedTags.GetValueOrDefault("display-name", ""),
+                    Color: parsedTags.GetValueOrDefault("color", ""),
+                    UserId: parsedTags.GetValueOrDefault("user-id", ""),
+                    IsSubscriber: parsedTags.TryGetValue("subscriber", out var sub) && sub == "1",
+                    SubscriberMonths: parsedTags.TryGetValue("badge-info", out var badgeInfo) ? badgeInfo.Split('/')[1] : "0",
+                    IsVip: parsedTags.TryGetValue("vip", out var vip) && vip == "1",
+                    Message: messageContent
+                )
+            );
         }
         private string DetectMessageType(string message) => Regex.Match(message, @"tmi.twitch.tv\s*(\S+)").Groups[1].Value ?? "UNKNOWN";
 
-        private (string channel, string messageContent) ExtractChannelAndMessage()
+        private (string channel, string messageContent) ExtractChannelAndMessage(string message)
         {
-            var match = Regex.Match(this.rawMessage, @"PRIVMSG #(\S+) :(.*)");
+            var match = Regex.Match(message, @"PRIVMSG #(\S+) :(.*)");
             if (match.Success)
             {
                 return (match.Groups[1].Value, match.Groups[2].Value);
             }
             return ("", "");
-        }
-        private UserInfo ExtractUserInfo(string messageContent)
-        {
-            parsedMessage.TryGetValue("display-name", out string? displayName);
-            parsedMessage.TryGetValue("color", out string? color);
-            parsedMessage.TryGetValue("user-id", out string? userId);
-            parsedMessage.TryGetValue("@badge-info", out string? subscriberInfo);
-
-            return new UserInfo
-            {
-                DisplayName = displayName ?? "",
-                Color = color ?? "",
-                UserId = userId ?? "",
-                IsSubscriber = !String.IsNullOrEmpty(subscriberInfo) && subscriberInfo.Contains("subscriber"),
-                SubscriberMonths = !string.IsNullOrEmpty(subscriberInfo) && subscriberInfo.Contains("/")
-                                    ? subscriberInfo.Split("/").ElementAtOrDefault(1) ?? ""
-                                    : "",
-                Message = messageContent,
-            };
         }
     }
 }

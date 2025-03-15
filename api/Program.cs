@@ -1,4 +1,4 @@
-using api.infrastructure.config;
+using api.Config;
 using api.infrastructure.irc;
 using api.infrastructure.repositories.twitch;
 
@@ -12,7 +12,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<TwitchRepository>();
 
-builder.Services.Configure<Config>(options =>
+builder.Services.Configure<TwitchConfig>(options =>
 {
     options.ClientId = Environment.GetEnvironmentVariable("ClientId", EnvironmentVariableTarget.Machine) ?? "";
     options.Secret = Environment.GetEnvironmentVariable("Secret", EnvironmentVariableTarget.Machine) ?? "";

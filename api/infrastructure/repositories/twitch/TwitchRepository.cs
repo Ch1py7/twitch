@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using api.infrastructure.config;
+using api.Config;
 using api.Models;
 using Microsoft.Extensions.Options;
 
@@ -8,10 +8,10 @@ namespace api.infrastructure.repositories.twitch
     public class TwitchRepository
     {
         private readonly string twitch_url = "https://id.twitch.tv/oauth2";
-        public readonly Config config;
+        public readonly TwitchConfig config;
         private readonly HttpClient client;
 
-        public TwitchRepository(HttpClient httpClient, IOptions<Config> config)
+        public TwitchRepository(HttpClient httpClient, IOptions<TwitchConfig> config)
         {
             client = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             this.config = config.Value;
@@ -19,18 +19,18 @@ namespace api.infrastructure.repositories.twitch
 
         public async Task<TwitchToken> GetToken(string code)
         {
-            this.config.GrantType = "authorization_code";
+            config.GrantType = "authorization_code";
 
             var body = new Dictionary<string, string>
             {
-                { "client_id", this.config.ClientId },
-                { "client_secret", this.config.Secret },
-                { "grant_type", this.config.GrantType },
+                { "client_id", config.ClientId },
+                { "client_secret", config.Secret },
+                { "grant_type", config.GrantType },
                 { "code", code },
-                { "redirect_uri", this.config.RedirectUri }
+                { "redirect_uri", config.RedirectUri }
             };
             var content = new FormUrlEncodedContent(body);
-            var response = await this.client.PostAsync($"{this.twitch_url}/token", content);
+            var response = await client.PostAsync($"{twitch_url}/token", content);
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -40,21 +40,21 @@ namespace api.infrastructure.repositories.twitch
 
             var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
 
-            this.config.AccessToken = tokenData.Access_Token;
-            this.config.RefreshToken = tokenData.Refresh_Token;
+            config.AccessToken = tokenData.Access_Token;
+            config.RefreshToken = tokenData.Refresh_Token;
 
             return tokenData;
         }
         public async Task<TwitchToken> RefreshToken(string? refreshToken)
         {
-            this.config.GrantType = "refresh_token";
+            config.GrantType = "refresh_token";
 
             var body = new Dictionary<string, string>
             {
-                { "client_id", this.config.ClientId },
-                { "client_secret", this.config.Secret },
-                { "grant_type", this.config.GrantType },
-                { "refresh_token", !String.IsNullOrEmpty(refreshToken) ? refreshToken : this.config.RefreshToken }
+                { "client_id", config.ClientId },
+                { "client_secret", config.Secret },
+                { "grant_type", config.GrantType },
+                { "refresh_token", !string.IsNullOrEmpty(refreshToken) ? refreshToken : config.RefreshToken }
             };
             var content = new FormUrlEncodedContent(body);
             var response = await this.client.PostAsync($"{this.twitch_url}/token", content);
@@ -67,8 +67,8 @@ namespace api.infrastructure.repositories.twitch
 
             var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
 
-            this.config.AccessToken = tokenData.Access_Token;
-            this.config.RefreshToken = tokenData.Refresh_Token;
+            config.AccessToken = tokenData.Access_Token;
+            config.RefreshToken = tokenData.Refresh_Token;
 
             return tokenData;
         }
@@ -87,8 +87,8 @@ namespace api.infrastructure.repositories.twitch
 
             var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
 
-            this.config.AccessToken = tokenData.Access_Token;
-            this.config.RefreshToken = tokenData.Refresh_Token;
+            config.AccessToken = tokenData.Access_Token;
+            config.RefreshToken = tokenData.Refresh_Token;
 
             return tokenData;
         }
