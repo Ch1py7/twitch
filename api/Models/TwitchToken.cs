@@ -5,14 +5,14 @@ namespace api.Models
     public class TwitchToken
     {
         [JsonPropertyName("access_token")]
-        public string Access_Token { get; set; }
+        public string AccessToken { get; set; }
         [JsonPropertyName("expires_in")]
-        public int Expires_In { get; set; }
+        public int ExpiresIn { get; set; }
         [JsonPropertyName("refresh_token")]
-        public string Refresh_Token { get; set; }
+        public string RefreshToken { get; set; }
         [JsonPropertyName("scope")]
         public string[] Scope { get; set; }
         [JsonPropertyName("token_type")]
-        public string Token_Type { get; set; }
+        public string TokenType { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using api.Config;
 using api.Models;
+using api.Services.TokenCache;
 using Microsoft.Extensions.Options;
 
 namespace api.infrastructure.repositories.twitch
@@ -8,26 +9,26 @@ namespace api.infrastructure.repositories.twitch
     public class TwitchRepository
     {
         private readonly string twitch_url = "https://id.twitch.tv/oauth2";
-        public readonly TwitchConfig config;
         private readonly HttpClient client;
+        private readonly ITokenCache token;
+        private readonly TwitchConfig config;
 
-        public TwitchRepository(HttpClient httpClient, IOptions<TwitchConfig> config)
+        public TwitchRepository(HttpClient httpClient, ITokenCache tokenCache, IOptions<TwitchConfig> config)
         {
-            client = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            token = tokenCache;
             this.config = config.Value;
+            client = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
         public async Task<TwitchToken> GetToken(string code)
         {
-            config.GrantType = "authorization_code";
-
             var body = new Dictionary<string, string>
             {
                 { "client_id", config.ClientId },
                 { "client_secret", config.Secret },
-                { "grant_type", config.GrantType },
+                { "grant_type", "authorization_code" },
                 { "code", code },
-                { "redirect_uri", config.RedirectUri }
+                { "redirect_uri", "http://localhost:3000" }
             };
             var content = new FormUrlEncodedContent(body);
             var response = await client.PostAsync($"{twitch_url}/token", content);
@@ -40,24 +41,21 @@ namespace api.infrastructure.repositories.twitch
 
             var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
 
-            config.AccessToken = tokenData.Access_Token;
-            config.RefreshToken = tokenData.Refresh_Token;
+            UpdateToken(tokenData);
 
             return tokenData;
         }
-        public async Task<TwitchToken> RefreshToken(string? refreshToken)
+        public async Task<TwitchToken> RefreshToken(string? refreshToken = "")
         {
-            config.GrantType = "refresh_token";
-
             var body = new Dictionary<string, string>
             {
                 { "client_id", config.ClientId },
                 { "client_secret", config.Secret },
-                { "grant_type", config.GrantType },
-                { "refresh_token", !string.IsNullOrEmpty(refreshToken) ? refreshToken : config.RefreshToken }
+                { "grant_type", "refresh_token" },
+                { "refresh_token", !string.IsNullOrEmpty(refreshToken) ? refreshToken : token.Current.RefreshToken }
             };
             var content = new FormUrlEncodedContent(body);
-            var response = await this.client.PostAsync($"{this.twitch_url}/token", content);
+            var response = await client.PostAsync($"{twitch_url}/token", content);
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -67,8 +65,7 @@ namespace api.infrastructure.repositories.twitch
 
             var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
 
-            config.AccessToken = tokenData.Access_Token;
-            config.RefreshToken = tokenData.Refresh_Token;
+            UpdateToken(tokenData);
 
             return tokenData;
         }
@@ -87,10 +84,18 @@ namespace api.infrastructure.repositories.twitch
 
             var tokenData = JsonSerializer.Deserialize<TwitchToken>(responseString);
 
-            config.AccessToken = tokenData.Access_Token;
-            config.RefreshToken = tokenData.Refresh_Token;
+            UpdateToken(tokenData);
 
             return tokenData;
+        }
+
+        private void UpdateToken(TwitchToken tokenData)
+        {
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            Token newToken = new Token(tokenData.AccessToken, tokenData.RefreshToken, tokenData.ExpiresIn, now);
+
+            token.WriteToken(newToken);
         }
     }
 }

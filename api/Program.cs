@@ -1,6 +1,7 @@
 using api.Config;
 using api.infrastructure.irc;
 using api.infrastructure.repositories.twitch;
+using api.Services.TokenCache;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,17 +17,15 @@ builder.Services.Configure<TwitchConfig>(options =>
 {
     options.ClientId = Environment.GetEnvironmentVariable("ClientId", EnvironmentVariableTarget.Machine) ?? "";
     options.Secret = Environment.GetEnvironmentVariable("Secret", EnvironmentVariableTarget.Machine) ?? "";
-    options.GrantType = "client_credentials";
-    options.RedirectUri = "http://localhost:3000";
-    options.Scope = "chat:read";
-    options.TokenType = "bearer";
-    options.AccessToken = "";
-    options.RefreshToken = "";
 });
 
-builder.Services.AddHostedService<TwitchChat>();
+builder.Services.AddSingleton<TwitchChat>();
+builder.Services.AddSingleton<ITokenCache, TokenCache>();
 
 var app = builder.Build();
+
+var twitchChat = app.Services.GetRequiredService<TwitchChat>();
+_ = Task.Run(() => twitchChat.Start(CancellationToken.None));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

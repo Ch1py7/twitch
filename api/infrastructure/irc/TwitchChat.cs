@@ -1,49 +1,27 @@
-﻿using System.Net.WebSockets;
-using api.Config;
-using api.infrastructure.repositories.twitch;
+﻿using api.infrastructure.repositories.twitch;
 using api.Services;
-using Microsoft.Extensions.Options;
+using api.Services.TokenCache;
 
 namespace api.infrastructure.irc
 {
-    public class TwitchChat : BackgroundService
+    public class TwitchChat
     {
-        private readonly string TWITCH_IRC_URL = "wss://irc-ws.chat.twitch.tv:443";
-        private readonly string NICKNAME = "bulbsum";
-        private readonly string CHANNEL = "bulbsum";
-
-        private readonly ClientWebSocket ws = new();
-        private readonly ILogger<TwitchChat> logger;
-
-        private readonly TwitchConfig config;
         private readonly IrcService ircService;
+        private static readonly int MaxAttempts = 3;
 
-        public TwitchChat(ILogger<TwitchChat> logger, TwitchRepository twitchRepository, IOptions<TwitchConfig> config)
+        public TwitchChat(ILogger<TwitchChat> logger, TwitchRepository twitchRepository, ITokenCache tokenCache)
         {
-            this.config = config.Value;
-            this.logger = logger;
-
-            ircService = new IrcService(ws, twitchRepository, logger);
+            ircService = new IrcService(twitchRepository, logger, tokenCache);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public async Task Start(CancellationToken stoppingToken)
         {
-            while (string.IsNullOrEmpty(config.AccessToken) || string.IsNullOrEmpty(config.RefreshToken))
+            await ircService.ConnectWebSocket(stoppingToken);
+
+            for (int i = 0; i < MaxAttempts; i++)
             {
-                logger.LogWarning("Tokens missing, retrying in 5 seconds...");
-                await Task.Delay(5000, stoppingToken);
+                await ircService.Listen(stoppingToken);
             }
-
-            logger.LogInformation("Connecting");
-            await ws.ConnectAsync(new Uri(TWITCH_IRC_URL), stoppingToken);
-            logger.LogInformation("Connected");
-
-            await ircService.SendMessage($"PASS oauth:{config.AccessToken}");
-            await ircService.SendMessage($"NICK {NICKNAME}");
-            await ircService.SendMessage($"JOIN #{CHANNEL}");
-            await ircService.SendMessage("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands");
-
-            await ircService.Listen(stoppingToken);
         }
     }
 }
