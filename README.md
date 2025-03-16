@@ -60,18 +60,23 @@ dotnet run
 
 ## 🏗️ Project Structure
 ```plaintext
-📂 Twitch Bot
-├── 📁 api
-│   ├── 📄 Program.cs
-│   ├── 📄 appsettings.json
-│   ├── 📁 Config
-│   ├── 📁 Controllers
-│   ├── 📁 Infrastructure
-│   ├── 📁 Models
-│   ├── 📁 Properties
-│   └── 📁 Services
-├── 📄 README.md
-└── 🔑 LICENSE
+📦 api
+ ┃ 📂 Application
+ ┃ ┣ 📂 Services
+ ┃ ┣ 📂 Repositories
+ ┃ ┗ 📜 Config.cs
+ ┃ 📂 Domain
+ ┃ ┣ 📂 Entities
+ ┃ 📂 Infrastructure
+ ┃ ┣ 📂 Twitch
+ ┃ ┃ ┣ 📂 Irc
+ ┃ ┃ ┣ 📂 Parser
+ ┃ 📂 Presentation
+ ┃ ┗ 📂 Controllers
+ ┗ 📜 Program.cs
+ ┗ 📜 appsettings.json
+ ┗ 📜 .editorconfig
+ ┗ 🔑 LICENCE
 ```
 
 ## 🛠 Built With
