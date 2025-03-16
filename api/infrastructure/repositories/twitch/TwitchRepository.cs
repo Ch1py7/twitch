@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using api.Application;
-using api.Application.Services.TokenCache;
 using api.Domain.Entities;
+using api.Infrastructure.Persistence.TokensRepository;
 using Microsoft.Extensions.Options;
 
 namespace api.Infrastructure.Repositories.Twitch
@@ -10,14 +10,14 @@ namespace api.Infrastructure.Repositories.Twitch
     {
         private readonly string twitch_url = "https://id.twitch.tv/oauth2";
         private readonly HttpClient client;
-        private readonly ITokenCache token;
         private readonly TwitchConfig config;
+        private readonly ITokensRepository tokens_repository;
 
-        public TwitchRepository(HttpClient httpClient, ITokenCache tokenCache, IOptions<TwitchConfig> config)
+        public TwitchRepository(HttpClient httpClient, IOptions<TwitchConfig> config, ITokensRepository tokens)
         {
-            token = tokenCache;
             this.config = config.Value;
             client = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            tokens_repository = tokens;
         }
 
         public async Task<TwitchToken> GetToken(string code)
@@ -47,12 +47,13 @@ namespace api.Infrastructure.Repositories.Twitch
         }
         public async Task<TwitchToken> RefreshToken(string? refreshToken = "")
         {
+            var dbToken = tokens_repository.GetToken().RefreshToken;
             var body = new Dictionary<string, string>
             {
                 { "client_id", config.ClientId },
                 { "client_secret", config.Secret },
                 { "grant_type", "refresh_token" },
-                { "refresh_token", !string.IsNullOrEmpty(refreshToken) ? refreshToken : token.Current.RefreshToken }
+                { "refresh_token", !string.IsNullOrEmpty(refreshToken) ? refreshToken : dbToken }
             };
             var content = new FormUrlEncodedContent(body);
             var response = await client.PostAsync($"{twitch_url}/token", content);
@@ -71,10 +72,10 @@ namespace api.Infrastructure.Repositories.Twitch
         }
         public async Task<TwitchToken> GetAuth(string accessToken)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{this.twitch_url}/validate");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{twitch_url}/validate");
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("OAuth", accessToken);
 
-            var response = await this.client.SendAsync(request);
+            var response = await client.SendAsync(request);
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -92,10 +93,22 @@ namespace api.Infrastructure.Repositories.Twitch
         private void UpdateToken(TwitchToken tokenData)
         {
             long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            Token newToken = new Token
+            {
+                AccessToken = tokenData.AccessToken,
+                RefreshToken = tokenData.RefreshToken,
+                ExpiresIn = tokenData.ExpiresIn,
+                ObtainedAt = now,
+            };
 
-            Token newToken = new Token(tokenData.AccessToken, tokenData.RefreshToken, tokenData.ExpiresIn, now);
-
-            token.WriteToken(newToken);
+            if (tokens_repository != null)
+            {
+                tokens_repository.UpdateToken(newToken);
+            }
+            else
+            {
+                tokens_repository.CreateToken(newToken);
+            }
         }
     }
 }

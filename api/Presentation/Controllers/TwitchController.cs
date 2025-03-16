@@ -2,7 +2,7 @@ using api.Domain.Entities;
 using api.Infrastructure.Repositories.Twitch;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers
+namespace api.Presentation.Controllers
 {
     [ApiController]
     [Route("[controller]")]

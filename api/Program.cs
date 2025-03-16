@@ -1,14 +1,12 @@
 using api.Application;
-using api.Application.Services.TokenCache;
 using api.Infrastructure.Irc;
+using api.Infrastructure.Persistence;
+using api.Infrastructure.Persistence.TokensRepository;
 using api.Infrastructure.Repositories.Twitch;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<TwitchRepository>();
@@ -19,15 +17,12 @@ builder.Services.Configure<TwitchConfig>(options =>
     options.Secret = Environment.GetEnvironmentVariable("Secret", EnvironmentVariableTarget.Machine) ?? "";
 });
 
-builder.Services.AddSingleton<TwitchChat>();
-builder.Services.AddSingleton<ITokenCache, TokenCache>();
+builder.Services.AddDbContext<AppDbContext>()
+.AddSingleton<ITokensRepository, TokensRepository>()
+.AddSingleton<TwitchChat>();
 
 var app = builder.Build();
 
-var twitchChat = app.Services.GetRequiredService<TwitchChat>();
-_ = Task.Run(() => twitchChat.Start(CancellationToken.None));
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -39,5 +34,9 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var twitchChat = app.Services.GetRequiredService<TwitchChat>();
+
+await twitchChat.Start(CancellationToken.None);
 
 app.Run();

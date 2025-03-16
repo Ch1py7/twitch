@@ -10,7 +10,7 @@ namespace api.Application.Services.TokenCache
 
         public TokenCache()
         {
-            Current = new Token(null, null, 0, 0);
+            Current = new Token { AccessToken = null, RefreshToken = null, ObtainedAt = 0, ExpiresIn = 0 };
 
             if (File.Exists(FileCachePath))
             {

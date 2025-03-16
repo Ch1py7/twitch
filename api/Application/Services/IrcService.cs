@@ -1,9 +1,9 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using api.Application.Services.TokenCache;
 using api.Domain.Entities;
 using api.Infrastructure.Irc;
 using api.Infrastructure.Parser;
+using api.Infrastructure.Persistence.TokensRepository;
 using api.Infrastructure.Repositories.Twitch;
 
 namespace api.Application.Services
@@ -11,18 +11,19 @@ namespace api.Application.Services
     public class IrcService
     {
         private ClientWebSocket ws = new();
-        private readonly ITokenCache token;
-        private TwitchRepository twitchRepository;
+        //private TwitchRepository twitchRepository;
         private readonly string CHANNEL = "bulbsum";
         private readonly ILogger<TwitchChat> logger;
         private readonly string NICKNAME = "bulbsum";
         private readonly string TWITCH_IRC_URL = "wss://irc-ws.chat.twitch.tv:443";
+        private readonly ITokensRepository tokens_repository;
+        private readonly TwitchRepository twitchRepository;
 
-        public IrcService(TwitchRepository twitchRepository, ILogger<TwitchChat> logger, ITokenCache tokenCache)
+        public IrcService(ILogger<TwitchChat> logger, ITokensRepository tokens, TwitchRepository twitchRepository)
         {
             this.twitchRepository = twitchRepository;
             this.logger = logger;
-            token = tokenCache;
+            tokens_repository = tokens;
         }
 
         public async Task SendMessage(string message)
@@ -63,7 +64,7 @@ namespace api.Application.Services
                     }
                     else if (message != ":tmi.twitch.tv 001 bulbsum :Welcome, GLHF!\r\n:tmi.twitch.tv 002 bulbsum :Your host is tmi.twitch.tv\r\n:tmi.twitch.tv 003 bulbsum :This server is rather new\r\n:tmi.twitch.tv 004 bulbsum :-\r\n:tmi.twitch.tv 375 bulbsum :-\r\n:tmi.twitch.tv 372 bulbsum :You are in a maze of twisty passages, all alike.\r\n:tmi.twitch.tv 376 bulbsum :>\r\n")
                     {
-                        MessageParser messageParser = new MessageParser(message);
+                        MessageParser messageParser = new(message);
 
                         switch (messageParser.messageType)
                         {
@@ -123,7 +124,7 @@ namespace api.Application.Services
 
         private async Task AuthenticateAndJoin()
         {
-            await SendMessage($"PASS oauth:{token.Current.AccessToken}");
+            await SendMessage($"PASS oauth:{tokens_repository.GetToken().AccessToken}");
             await SendMessage($"NICK {NICKNAME}");
             await SendMessage($"JOIN #{CHANNEL}");
             await SendMessage("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands");
