@@ -1,6 +1,6 @@
 ﻿using api.Application.Services;
 using api.Infrastructure.Persistence.TokensRepository;
-using api.Infrastructure.Repositories.Twitch;
+using api.Infrastructure.Persistence.TwitchRepository;
 
 namespace api.Infrastructure.Irc
 {

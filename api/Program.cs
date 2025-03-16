@@ -2,7 +2,7 @@ using api.Application;
 using api.Infrastructure.Irc;
 using api.Infrastructure.Persistence;
 using api.Infrastructure.Persistence.TokensRepository;
-using api.Infrastructure.Repositories.Twitch;
+using api.Infrastructure.Persistence.TwitchRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 

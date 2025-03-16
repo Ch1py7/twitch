@@ -63,14 +63,13 @@ dotnet run
 📦 api
  ┃ 📂 Application
  ┃ ┣ 📂 Services
- ┃ ┣ 📂 Repositories
  ┃ ┗ 📜 Config.cs
  ┃ 📂 Domain
  ┃ ┣ 📂 Entities
  ┃ 📂 Infrastructure
- ┃ ┣ 📂 Twitch
- ┃ ┃ ┣ 📂 Irc
- ┃ ┃ ┣ 📂 Parser
+ ┃ ┣ 📂 Irc
+ ┃ ┣ 📂 Parser
+ ┃ ┣ 📂 Persistence
  ┃ 📂 Presentation
  ┃ ┗ 📂 Controllers
  ┗ 📜 Program.cs

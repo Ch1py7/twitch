@@ -1,5 +1,5 @@
 using api.Domain.Entities;
-using api.Infrastructure.Repositories.Twitch;
+using api.Infrastructure.Persistence.TwitchRepository;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Presentation.Controllers

@@ -4,7 +4,7 @@ using api.Domain.Entities;
 using api.Infrastructure.Persistence.TokensRepository;
 using Microsoft.Extensions.Options;
 
-namespace api.Infrastructure.Repositories.Twitch
+namespace api.Infrastructure.Persistence.TwitchRepository
 {
     public class TwitchRepository
     {

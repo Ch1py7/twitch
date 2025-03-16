@@ -4,7 +4,7 @@ using api.Domain.Entities;
 using api.Infrastructure.Irc;
 using api.Infrastructure.Parser;
 using api.Infrastructure.Persistence.TokensRepository;
-using api.Infrastructure.Repositories.Twitch;
+using api.Infrastructure.Persistence.TwitchRepository;
 
 namespace api.Application.Services
 {
