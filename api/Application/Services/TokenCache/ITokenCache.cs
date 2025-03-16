@@ -1,6 +1,6 @@
-﻿using api.Models;
+﻿using api.Domain.Entities;
 
-namespace api.Services.TokenCache
+namespace api.Application.Services.TokenCache
 {
     public interface ITokenCache
     {

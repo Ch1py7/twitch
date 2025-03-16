@@ -1,7 +1,7 @@
-using api.Config;
-using api.infrastructure.irc;
-using api.infrastructure.repositories.twitch;
-using api.Services.TokenCache;
+using api.Application;
+using api.Application.Services.TokenCache;
+using api.Infrastructure.Irc;
+using api.Infrastructure.Repositories.Twitch;
 
 var builder = WebApplication.CreateBuilder(args);
 

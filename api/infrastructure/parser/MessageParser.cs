@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using api.Models;
+using api.Domain.Entities;
 
-namespace api.infrastructure.parser
+namespace api.Infrastructure.Parser
 {
     public class MessageParser
     {

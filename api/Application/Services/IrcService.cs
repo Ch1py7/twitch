@@ -1,12 +1,12 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using api.infrastructure.irc;
-using api.infrastructure.parser;
-using api.infrastructure.repositories.twitch;
-using api.Models;
-using api.Services.TokenCache;
+using api.Application.Services.TokenCache;
+using api.Domain.Entities;
+using api.Infrastructure.Irc;
+using api.Infrastructure.Parser;
+using api.Infrastructure.Repositories.Twitch;
 
-namespace api.Services
+namespace api.Application.Services
 {
     public class IrcService
     {
@@ -67,7 +67,7 @@ namespace api.Services
 
                         switch (messageParser.messageType)
                         {
-                            case ("PRIVMSG"):
+                            case "PRIVMSG":
                                 TwitchMessage parsedMessage = messageParser.ParseTwitchMessage();
                                 logger.LogInformation($"{parsedMessage.UserInfo.Message}");
                                 break;

@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
-using api.Config;
-using api.Models;
-using api.Services.TokenCache;
+using api.Application;
+using api.Application.Services.TokenCache;
+using api.Domain.Entities;
 using Microsoft.Extensions.Options;
 
-namespace api.infrastructure.repositories.twitch
+namespace api.Infrastructure.Repositories.Twitch
 {
     public class TwitchRepository
     {

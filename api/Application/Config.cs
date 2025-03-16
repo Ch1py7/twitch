@@ -1,4 +1,4 @@
-﻿namespace api.Config
+﻿namespace api.Application
 {
     public class TwitchConfig
     {

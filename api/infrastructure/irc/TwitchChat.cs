@@ -1,8 +1,8 @@
-﻿using api.infrastructure.repositories.twitch;
-using api.Services;
-using api.Services.TokenCache;
+﻿using api.Application.Services;
+using api.Application.Services.TokenCache;
+using api.Infrastructure.Repositories.Twitch;
 
-namespace api.infrastructure.irc
+namespace api.Infrastructure.Irc
 {
     public class TwitchChat
     {
